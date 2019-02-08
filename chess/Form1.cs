@@ -6,6 +6,7 @@ using System.Windows.Forms;
 using System.Resources;
 using System.Drawing.Drawing2D;
 using System.Drawing;
+using System.Threading;
 using System.Collections;
 
 namespace chess
@@ -111,6 +112,7 @@ namespace chess
             W_ochki = 0;
             B_ochki = 0;
             listBox1.Items.Clear();
+            listBox2.Items.Clear();
             pole = new Cells[8, 8]; //pole[x,y] //Выделяем динамическую память для шахматной доски
             rok = new rokirovka[2];
             for (int y = 0; y < 8; y++) //тут идет заполнение поля черными и белыми клетками
@@ -318,9 +320,12 @@ namespace chess
                 rok[1].right.flag = false;
             }
             player = anti_player(player);
-            label1.Text = "Взято белых " + daeth_white.ToString();//Выводим всякую информацию
-            label2.Text = "Взято черных " + daeth_black.ToString();
-            label3.Text = "Сейчас ходит " + player + " Игрок";
+            Invoke(new Action(() =>
+            {
+                label1.Text = "Взято белых " + daeth_white.ToString();//Выводим всякую информацию
+                label2.Text = "Взято черных " + daeth_black.ToString();
+                label3.Text = "Сейчас ходит " + player + " Игрок";
+            }));
             drawing();
 
             //если игрок пытается передвинуть чужую фигуру,выводим напоминание
@@ -381,7 +386,7 @@ namespace chess
             if (((string)(white_c.SelectedItem)) == "Компьютер")
             {
                 dostup_hod();
-                randi();
+                new Thread(() => randi()).Start();
             }
         }
 
@@ -395,6 +400,10 @@ namespace chess
 
         }
         Stack otmena = new Stack();
+        string string_hod(Point begin, Point end)
+        {
+            return "" + char_from_number(begin.X) + (8 - begin.Y) + " - " + char_from_number(end.X) + (8 - end.Y);
+        }
         private void check_moove(int x, int y) //X Y координаты, куда ходить
         {//Функция проверки корректности ходов всех фигур
             if (x >= 0 && x < 8 && y >= 0 && y < 8)
@@ -409,11 +418,11 @@ namespace chess
                     {
                         B_povtor = new Coordinata(position, new Point(x, y));
                     }
-                    string log = "" + char_from_number(position.X) + (8 - position.Y) + " - " + char_from_number(x) + (8 - y) + ";";
+                    string log = string_hod(position, new Point(x, y)) + ";";
                     Ctrl_Z z = new Ctrl_Z(pole[position.X, position.Y], pole[x, y], false, rok, player, W_ochki, B_ochki);
                     otmena.Push(z);
                     go(x, y);
-                    listBox1.Items.Insert(0, log);
+                    Invoke(new Action(() => { listBox1.Items.Insert(0, log); }));
                     dostup_hod();
 
 
@@ -423,8 +432,9 @@ namespace chess
                         else
                         {
                             MessageBox.Show("Шах " + player);
-                            tik = 0;
-                            timer1.Start();
+                            /*tik = 0;
+                            timer1.Start();*/
+                            next_hod();
 
                         }
                     else
@@ -432,8 +442,9 @@ namespace chess
                         MessageBox.Show("Пат");
                     else
                     {
-                        tik = 0;
-                        timer1.Start();
+                        /*tik = 0;
+                        timer1.Start();*/
+                        next_hod();
                     }
                 }
                 else
@@ -479,16 +490,18 @@ namespace chess
                         else
                         {
                             MessageBox.Show("Шах " + player);
-                            tik = 0;
-                            timer1.Start();
+                            /*tik = 0;
+                            timer1.Start();*/
+                            next_hod();
                         }
                     else
                         if (available_course.Count == 0)
                         MessageBox.Show("Пат");
                     else
                     {
-                        tik = 0;
-                        timer1.Start();
+                        /*tik = 0;
+                        timer1.Start();*/
+                        next_hod();
                     }
                 }
             }
@@ -513,7 +526,7 @@ namespace chess
             return -1;//если координата выходит за границы возвращаем -1
 
         }
-        public void select_figura(int x,int y,Figura f)
+        public void select_figura(int x, int y, Figura f)
         {
             pole[x, y].name_figur = f;
             drawing();
@@ -523,16 +536,16 @@ namespace chess
         {
             if (check_Koordinate(e.X) >= 0 && check_Koordinate(e.Y) >= 0)
                 if (rasstavit)
-            {
+                {
                     int x = check_Koordinate(e.X);
                     int y = check_Koordinate(e.Y);
-                    Select_figura select_Figura = new Select_figura(this,x,y);
+                    Select_figura select_Figura = new Select_figura(this, x, y);
                     select_Figura.Show();
-                    
-            }
-            else
-            {
-                //проверяем не выходит ли если координата за границы
+
+                }
+                else if (current_player()!="Компьютер")
+                {
+                    //проверяем не выходит ли если координата за границы
                     if (stat) //если нет, проверяем была ли быврана фигура для хода
                     {
                         //если была то вызваем функцию проверки корректности хода
@@ -552,7 +565,7 @@ namespace chess
                             stat = true;//запоминаем координаты выбраной для хода фигуры и ждем пока игрок подумает куда поставить фигуру
                         }
                     }
-            }
+                }
         }
         ArrayList Kon(int x, int y, Cells[,] poles)
         {
@@ -735,7 +748,7 @@ namespace chess
 
                 }
             if (ix == -1 || gy == -1)
-                MessageBox.Show(@" bool check_no_shah(cells[,] poles,string playeer)");
+                MessageBox.Show(@" bool check_no_shah(cells[,] poles,string playeer)" + r);
             if (playeer == "Белый")
             {
                 if (ix - 1 >= 0 && gy - 1 >= 0)
@@ -933,20 +946,23 @@ namespace chess
             Point Begin = new Point(-1, -1);
             Point End = new Point(-1, -1);
             dostup_hod();
-
-
+            Invoke(new Action(() => { listBox2.Items.Insert(0, "---Следующий Ход---"); }));
             foreach (Cells c in available_course)
             {
                 ArrayList alow = alow_hod(1, Copy_mas(pole), player, c.X, c.Y);
-
-
                 foreach (Cells k in alow)
                 {
                     int e;
-
-                    e = evristic(c.X, c.Y, k.X, k.Y, player, pole);
-
-                    //e = calculate(0, c.X, c.Y, k.X, k.Y, Copy_mas(pole),player, 2);
+                    int depth = 0;
+                    try
+                    {
+                        depth = Convert.ToInt32(textBox1.Text);
+                    } catch (Exception excep)
+                    {
+                        MessageBox.Show(excep.Message);
+                    }
+                    e = calculate(0, c.X, c.Y, k.X, k.Y, Copy_mas(pole), player, depth);
+                    Invoke(new Action(() => { listBox2.Items.Insert(0, string_hod(new Point(c.X, c.Y), new Point(k.X, k.Y)) + " = " + e + ";"); }));
                     if (e > evr)
                     {
 
@@ -956,6 +972,10 @@ namespace chess
                         Coord.Clear();
                         Coordinata coor = new Coordinata(Begin, End);
                         Coord.Add(coor);
+                        if (evr == 100000)
+                        {
+                            break;
+                        }
 
 
 
@@ -973,6 +993,10 @@ namespace chess
                     }
 
                 }
+                if (evr == 100000)
+                {
+                    break;
+                }
 
             }
             Coordinata coordin = ((Coordinata)Coord[rand.Next(Coord.Count - 1)]);
@@ -983,37 +1007,97 @@ namespace chess
 
         int calculate(int count, int X, int Y, int x, int y, Cells[,] poles, string playeer, int depth)
         {
-            int sum = 0;
+            int now_evr = evristic(X, Y, x, y, playeer, poles);
             if (depth == count)
             {
-                return evristic(X, Y, x, y, playeer, poles);
+                return now_evr;
             }
             else
             {
-                if (check_mat(go(X, Y, x, y, Copy_mas(poles)), anti_player(playeer)))
-                    return 100000;
-                if (check_pat(go(X, Y, x, y, Copy_mas(poles)), anti_player(playeer)))
+                Cells[,] neo_pole = go(X, Y, x, y, Copy_mas(poles));
+                if (check_mat(neo_pole, anti_player(playeer)))
+                    return 100000 - count;
+                if (check_pat(neo_pole, anti_player(playeer)))
                     return -100000;
-                Cells[,] neo_pole = (go(X, Y, x, y, Copy_mas(poles)));
                 ArrayList av_cc = dostup_hod(0, neo_pole, anti_player(playeer));
+                int evr = -999999;
+                Point begin;
+                Point end;
+                ArrayList max_coords_antiplayer = new ArrayList();
                 foreach (Cells cc in av_cc)
                 {
                     ArrayList aloww = alow_hod(2, Copy_mas(neo_pole), anti_player(playeer), cc.X, cc.Y);
                     foreach (Cells kk in aloww)
                     {
-                        if (check_mat(go(cc.X, cc.Y, kk.X, kk.Y, Copy_mas(neo_pole)), playeer))
+                        int e = evristic(cc.X, cc.Y, kk.X, kk.Y, anti_player(playeer), neo_pole);
+                        if (e > evr)
+                        {
+
+                            evr = e;
+                            begin = new Point(cc.X, cc.Y);
+                            end = new Point(kk.X, kk.Y);
+                            max_coords_antiplayer.Clear();
+                            Coordinata coor = new Coordinata(begin, end);
+                            max_coords_antiplayer.Add(coor);
+
+
+
+                        }
+                        else if (e == evr)
+                        {
+
+
+                            begin = new Point(cc.X, cc.Y);
+                            end = new Point(kk.X, kk.Y);
+                            Coordinata coor = new Coordinata(begin, end);
+                            max_coords_antiplayer.Add(coor);
+
+
+                        }
+
+                        /*if (check_mat(go(cc.X, cc.Y, kk.X, kk.Y, Copy_mas(neo_pole)), playeer))
                             return -100000;
                         if (check_pat(go(cc.X, cc.Y, kk.X, kk.Y, Copy_mas(neo_pole)), anti_player(playeer)))
                             if (can_pat(playeer))
                                 return 100000;
                             else
-                                return -100000;
-                        int e = calculate(count + 1, cc.X, cc.Y, kk.X, kk.Y, Copy_mas(neo_pole), playeer, depth);
-                        sum += e;
+                                return -100000;*/
+
                     }
                 }
+                Coordinata coordin = ((Coordinata)max_coords_antiplayer[rand.Next(max_coords_antiplayer.Count - 1)]);
+                neo_pole = go(coordin.Begin.X, coordin.Begin.Y, coordin.End.X, coordin.End.Y, Copy_mas(neo_pole));
+                if (check_mat(neo_pole, playeer))
+                    return -100000;
+                av_cc = dostup_hod(0, neo_pole, playeer);
+                evr = -999999;
+                foreach (Cells cc in av_cc)
+                {
+                    ArrayList aloww = alow_hod(2, Copy_mas(neo_pole), playeer, cc.X, cc.Y);
+                    foreach (Cells kk in aloww)
+                    {
+                        int e = calculate(count + 1, cc.X, cc.Y, kk.X, kk.Y, Copy_mas(neo_pole), playeer, depth);
+                        if (e == 100000 - count - 1)
+                            return e;
+                        if (e > evr)
+                            evr = e;
+
+                        /*if (check_mat(go(cc.X, cc.Y, kk.X, kk.Y, Copy_mas(neo_pole)), playeer))
+                            return -100000;
+                        if (check_pat(go(cc.X, cc.Y, kk.X, kk.Y, Copy_mas(neo_pole)), anti_player(playeer)))
+                            if (can_pat(playeer))
+                                return 100000;
+                            else
+                                return -100000;*/
+
+                    }
+                }
+                /*int e = calculate(count + 1, cc.X, cc.Y, kk.X, kk.Y, Copy_mas(neo_pole), playeer, depth);
+                if (e > evr)
+                    evr = e;
+                ;*/
+                return now_evr + evr;
             }
-            return sum;
         }
         string anti_player(string playeer)
         {
@@ -1485,22 +1569,27 @@ namespace chess
             //на всякий случай
         }
 
-        private void timer1_Tick(object sender, EventArgs e)
+        void next_hod()
         {
-            tik += timer1.Interval;
-            if (tik > 0)
+            Invoke(new Action(() =>
             {
-                timer1.Stop();
-                if (player == "Черный")
+                if (current_player()== "Компьютер")
                 {
-
-                    if ((string)black_c.SelectedItem == "Компьютер") randi();
-                }
-                else
-                    if ((string)white_c.SelectedItem == "Компьютер") randi();
-
-            }
+                   new Thread(() => randi()).Start();
+                }                
+            }));
         }
+        
+        string current_player()
+        {
+            if (player == "Черный")
+            {
+                return (string)black_c.SelectedItem;
+            }
+            else return (string)white_c.SelectedItem;
+        }
+
+
         bool rasstavit = false;
         private void button3_Click(object sender, EventArgs e)
         {
@@ -1511,7 +1600,8 @@ namespace chess
                 button3.Text = "Закончить расстановку";
                 drawing();
 
-            } else
+            }
+            else
             {
                 rasstavit = false;
                 for (int i = 0; i < rok.Length; i++)
@@ -1527,6 +1617,19 @@ namespace chess
         private void panel1_Paint(object sender, PaintEventArgs e)
         {
 
+        }
+
+        private void textBox1_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            player = anti_player(player);
+            label3.Text = "Сейчас ходит " + player + " Игрок";
+            drawing();
+            next_hod();
         }
 
         private void button2_Click(object sender, EventArgs e)
