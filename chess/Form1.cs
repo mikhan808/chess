@@ -811,13 +811,14 @@ namespace chess
             dostup_hod();
             Invoke(new Action(() => { listBox2.Items.Insert(0, "---Следующий Ход---"); }));
             int count_threads = 0;
+            DateTime beginTime = DateTime.Now;
             foreach (Cells c in available_course.Keys)
             {
                 List<DostupnyyHod> alow = available_course[c];
                 foreach (DostupnyyHod k in alow)
                 {
-                    vychislenie_cofficienta(new Hod(c, k), map_coefficents);
-                    //new Thread(() => vychislenie_cofficienta(new Hod(c, k), map_coefficents)).Start();
+                    //vychislenie_cofficienta(new Hod(c, k), map_coefficents);
+                    new Thread(() => vychislenie_cofficienta(new Hod(c, k), map_coefficents)).Start();
                     count_threads++;
                 }
 
@@ -827,37 +828,26 @@ namespace chess
             {
                 Thread.Sleep(10);
             }
+            DateTime endTime = DateTime.Now;
+            Invoke(new Action(() => { listBox2.Items.Insert(0, (endTime.Ticks-beginTime.Ticks) + " тиков"); }));
             foreach (Hod hodd in map_coefficents.Keys)
             {
                 int e = map_coefficents[hodd];
                 if (e > evr)
                 {
-
                     evr = e;
-
                     best_hodss.Clear();
                     best_hodss.Add(hodd);
-
-
-
                 }
                 else if (e == evr)
                 {
-
                     best_hodss.Add(hodd);
-
-
                 }
                 if (evr == 100000)
                 {
                     break;
                 }
-
-
-
             }
-
-
             Hod hod = best_hodss[rand.Next(best_hodss.Count - 1)];
             position = new Point(hod.begin.X, hod.begin.Y);
             alow_hod(pole);
@@ -877,7 +867,6 @@ namespace chess
             {
                 MessageBox.Show(excep.Message);
             }
-            //new Thread(() => randi()).Start();
             e = calculate(0, hodd.begin.X, hodd.begin.Y, hodd.hod, Cells.copy_cells(pole), copy_rokirovka(rok), player, depth);
             Invoke(new Action(() => { map_coefficents.Add(hodd, e); }));
             Invoke(new Action(() => { listBox2.Items.Insert(0, string_hod(new Point(hodd.begin.X, hodd.begin.Y), new Point(hodd.hod.cells.X, hodd.hod.cells.Y)) + " = " + e + ";"); }));
