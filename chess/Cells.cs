@@ -47,5 +47,18 @@ namespace chess
             }
         }
 
+        public static Cells[,] copy_cells(Cells[,] mas)
+        {
+            Cells[,] poles = new Cells[8, 8];
+            for (int x = 0; x < 8; x++)
+                for (int y = 0; y < 8; y++)
+                {
+                    poles[x, y] = new Cells(mas[x, y]);
+
+                }
+
+            return poles;
+        }
+
     }
 }

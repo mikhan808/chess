@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Windows.Forms;
-using System.Resources;
-using System.Drawing.Drawing2D;
 using System.Drawing;
 using System.Threading;
 using System.Collections;
@@ -15,13 +11,8 @@ namespace chess
     {
         Coordinata W_povtor;
         Coordinata B_povtor;
-        ArrayList W_povtory = new ArrayList();
-        ArrayList B_povtory = new ArrayList();
-        int W_repeat = 0;
-        int B_repeat = 0;
         int W_ochki = 0;
         int B_ochki = 0;
-        int tik = 0;
         public Form1()
         {
             InitializeComponent();//Расставляем итемы по форме
@@ -32,18 +23,18 @@ namespace chess
         }
 
 
-        ArrayList allow_pole = new ArrayList();
-        public struct rokirovka
+        List<DostupnyyHod> allow_pole = new List<DostupnyyHod>();
+        public struct FlangRokirovka
         {
-            public roki right;
-            public roki left;
+            public Rokirovka right;
+            public Rokirovka left;
         }
-        public struct roki
+        public struct Rokirovka
         {
             public bool flag;
-            public Point Coord;
+            public Point coordinata;
         }
-        rokirovka[] rok;
+        FlangRokirovka[] rok;
         int full_ochki = 0;
 
         private static Cells[,] pole; //выделяем память для структуры
@@ -56,9 +47,9 @@ namespace chess
             if (flag) //если flag = true расставляем черные фигуры
             {
                 rok[1].left.flag = true;
-                rok[1].left.Coord = new Point(2, 0);
+                rok[1].left.coordinata = new Point(2, 0);
                 rok[1].right.flag = true;
-                rok[1].right.Coord = new Point(6, 0);
+                rok[1].right.coordinata = new Point(6, 0);
                 pole[0, 0].name_figur = Figura.figury[1, 1]; //Каждой фигуре присваеваем имя..
                 pole[1, 0].name_figur = Figura.figury[1, 2];
                 pole[2, 0].name_figur = Figura.figury[1, 3];
@@ -75,9 +66,9 @@ namespace chess
             else//белые
             {
                 rok[0].left.flag = true;
-                rok[0].left.Coord = new Point(2, 7);
+                rok[0].left.coordinata = new Point(2, 7);
                 rok[0].right.flag = true;
-                rok[0].right.Coord = new Point(6, 7);
+                rok[0].right.coordinata = new Point(6, 7);
                 pole[0, 7].name_figur = Figura.figury[0, 1]; //Каждой фигуре присваеваем имя..
                 pole[1, 7].name_figur = Figura.figury[0, 2];
                 pole[2, 7].name_figur = (Figura.figury[0, 3]);
@@ -114,7 +105,7 @@ namespace chess
             listBox1.Items.Clear();
             listBox2.Items.Clear();
             pole = new Cells[8, 8]; //pole[x,y] //Выделяем динамическую память для шахматной доски
-            rok = new rokirovka[2];
+            rok = new FlangRokirovka[2];
             for (int y = 0; y < 8; y++) //тут идет заполнение поля черными и белыми клетками
             {
                 for (int x = 0; x < 8; x++)
@@ -195,60 +186,33 @@ namespace chess
             Bitmap white_check = new Bitmap(@"figurs\БелыйКлеткаВыд.bmp"); //загружаем картинки пустых клеток
             Bitmap black_check = new Bitmap(@"figurs\ЧерныйКлеткаВыд.bmp");
             Bitmap temp;//переменная для временного хранения загруженных картинок
-            foreach (Cells p in allow_pole)
-                if (p.name_figur != null) //если поле name элемента не пустое значит это какаято фигура
+            foreach (DostupnyyHod p in allow_pole)
+                if (p.cells.name_figur != null) //если поле name элемента не пустое значит это какаято фигура
                 {//загружаем клетку с соответствующей фигурой
-                    temp = new Bitmap(@"figurs\" + p.name_figur.BorW + p.name_figur.name.name + "На" + p.pos_BorW + "Выд.bmp");
-                    board.DrawImage(temp, p.positionX, p.positionY); //рисуем
+                    temp = new Bitmap(@"figurs\" + p.cells.name_figur.BorW + p.cells.name_figur.name.name + "На" + p.cells.pos_BorW + "Выд.bmp");
+                    board.DrawImage(temp, p.cells.positionX, p.cells.positionY); //рисуем
                     temp.Dispose();//освобождаем временную переменную
                 }
                 else //если поле name элемента пустое значит это просто клетка
                 {
-                    if (p.pos_BorW == "White") //Определяем цвет клетки
-                        board.DrawImage(white_check, p.positionX, p.positionY); //рисуем
+                    if (p.cells.pos_BorW == "White") //Определяем цвет клетки
+                        board.DrawImage(white_check, p.cells.positionX, p.cells.positionY); //рисуем
                     else
-                        board.DrawImage(black_check, p.positionX, p.positionY);
-                }
-            foreach (Cells p in hod_rok)
-                if (p.name_figur != null) //если поле name элемента не пустое значит это какаято фигура
-                {//загружаем клетку с соответствующей фигурой
-                    temp = new Bitmap(@"figurs\" + p.name_figur.BorW + p.name_figur.name + "На" + p.pos_BorW + "Выд.bmp");
-                    board.DrawImage(temp, p.positionX, p.positionY); //рисуем
-                    temp.Dispose();//освобождаем временную переменную
-                }
-                else //если поле name элемента пустое значит это просто клетка
-                {
-                    if (p.pos_BorW == "White") //Определяем цвет клетки
-                        board.DrawImage(white_check, p.positionX, p.positionY); //рисуем
-                    else
-                        board.DrawImage(black_check, p.positionX, p.positionY);
+                        board.DrawImage(black_check, p.cells.positionX, p.cells.positionY);
                 }
 
             white_check.Dispose(); //освобождаем занимаемую память
             black_check.Dispose();
             board.Dispose();
         }
-        ArrayList available_course = new ArrayList();//доступные фигуры
+        Dictionary<Cells, List<DostupnyyHod>> available_course = new Dictionary<Cells, List<DostupnyyHod>>();//доступные фигуры
         void dostup_hod()
         {
-            available_course.Clear();
-            for (int i = 0; i < 8; i++)
-                for (int g = 0; g < 8; g++)
-                {
-                    if (pole[i, g].name_figur != null)
-                        if (pole[i, g].name_figur.BorW == player)
-                        {
-                            position.X = i;
-                            position.Y = g;
-                            alow_hod(pole);
-                            if (allow_pole.Count > 0 || hod_rok.Count > 0)
-                                available_course.Add(pole[i, g]);
-                        }
-                }
+            available_course = dostup_hod(pole, player, rok);
         }
-        ArrayList dostup_hod(int r, Cells[,] poles, string playeer)
+        Dictionary<Cells, List<DostupnyyHod>> dostup_hod(Cells[,] poles, string playeer, FlangRokirovka[] rok)
         {
-            ArrayList Available_course = new ArrayList();
+            Dictionary<Cells, List<DostupnyyHod>> available_course = new Dictionary<Cells, List<DostupnyyHod>>();
             for (int i = 0; i < 8; i++)
                 for (int g = 0; g < 8; g++)
                 {
@@ -256,58 +220,63 @@ namespace chess
                         if (poles[i, g].name_figur.BorW == playeer)
                         {
 
-                            ArrayList Allow_pole = alow_hod(r, poles, playeer, i, g);
-                            if (Allow_pole.Count > 0)
-                                Available_course.Add(poles[i, g]);
+                            List<DostupnyyHod> allow_pole = alow_hod(poles, playeer, i, g, rok);
+                            if (allow_pole.Count > 0)
+                                available_course.Add(poles[i, g], allow_pole);
                         }
                 }
-            return Available_course;
+            return available_course;
         }
-        private void go(int x, int y) //Функция перемещения фигур по полю
+        private void go(DostupnyyHod dh) //Функция перемещения фигур по полю
         {
             //и фигуру какого цвета он хочет передвинуть
-            if (pole[x, y].name_figur != null) //если игрок хоче кого-то срубить
+            if (pole[dh.cells.X, dh.cells.Y].name_figur != null) //если игрок хоче кого-то срубить
             {
 
-                if (pole[x, y].name_figur.BorW != pole[position.X, position.Y].name_figur.BorW)//проверяем не хочит ли игрок срубить свою фигуру
+                if (pole[dh.cells.X, dh.cells.Y].name_figur.BorW != pole[position.X, position.Y].name_figur.BorW)//проверяем не хочит ли игрок срубить свою фигуру
                 {
                     //MessageBox.Show("Вы срубили фигуру под названием: " + pole[x, y].name_figur.name+":)");//если все нормально выводим сообщение
-                    if (pole[x, y].name_figur.BorW == "Белый") //срубили, теперь повышаем счетчик срубленных фигур
+                    if (pole[dh.cells.X, dh.cells.Y].name_figur.BorW == "Белый") //срубили, теперь повышаем счетчик срубленных фигур
                     {
-                        daeth_white += pole[x, y].name_figur.name.ochki;
-                        W_ochki -= pole[x, y].name_figur.name.ochki;
+                        daeth_white += pole[dh.cells.X, dh.cells.Y].name_figur.name.ochki;
+                        W_ochki -= pole[dh.cells.X, dh.cells.Y].name_figur.name.ochki;
                     }
                     else
                     {
-                        daeth_black += pole[x, y].name_figur.name.ochki;
-                        B_ochki -= pole[x, y].name_figur.name.ochki;
+                        daeth_black += pole[dh.cells.X, dh.cells.Y].name_figur.name.ochki;
+                        B_ochki -= pole[dh.cells.X, dh.cells.Y].name_figur.name.ochki;
                     }
 
-                    pole[x, y].name_figur = new Figura(pole[position.X, position.Y].name_figur); //передвигаем фигур
+                    pole[dh.cells.X, dh.cells.Y].name_figur = new Figura(pole[position.X, position.Y].name_figur); //передвигаем фигур
                     pole[position.X, position.Y].name_figur = null; //зануляем больше ненужные поля
 
                 }
             }
             else //если игрок просто ходит
             {
-                pole[x, y].name_figur = new Figura(pole[position.X, position.Y].name_figur); //передвигаем фигур
+                pole[dh.cells.X, dh.cells.Y].name_figur = new Figura(pole[position.X, position.Y].name_figur); //передвигаем фигур
                 pole[position.X, position.Y].name_figur = null;
             }
-            if (y == 0 || y == 7)
+            if (dh.cells.Y == 0 || dh.cells.Y == 7)
             {
-                if (Figura.figury[0, 0].Compar(pole[x, y].name_figur))
-                    pole[x, y].name_figur = new Figura(Figura.figury[0, 4]);
-                if (Figura.figury[1, 0].Compar(pole[x, y].name_figur))
-                    pole[x, y].name_figur = new Figura(Figura.figury[1, 4]);
+                if (Figura.figury[Figura.WHITE, Figura.PESHKA].Compar(pole[dh.cells.X, dh.cells.Y].name_figur))
+                    pole[dh.cells.X, dh.cells.Y].name_figur = new Figura(Figura.figury[0, 4]);
+                if (Figura.figury[Figura.BLACK, Figura.PESHKA].Compar(pole[dh.cells.X, dh.cells.Y].name_figur))
+                    pole[dh.cells.X, dh.cells.Y].name_figur = new Figura(Figura.figury[1, 4]);
+            }
+            if (dh.rokirovka)
+            {
+                pole[dh.ladyaEnd.X, dh.ladyaEnd.Y].name_figur = new Figura(pole[dh.ladyaBegin.X, dh.ladyaBegin.Y].name_figur);
+                pole[dh.ladyaBegin.X, dh.ladyaBegin.Y].name_figur = null;
             }
 
-            if (position.X == 0 && position.Y == 7)
+            if (position.X == 0 && position.Y == 7 || dh.cells.X == 0 && dh.cells.Y == 7)
                 rok[0].left.flag = false;
-            if (position.X == 7 && position.Y == 7)
+            if (position.X == 7 && position.Y == 7 || dh.cells.X == 7 && dh.cells.Y == 7)
                 rok[0].right.flag = false;
-            if (position.X == 0 && position.Y == 0)
+            if (position.X == 0 && position.Y == 0 || dh.cells.X == 0 && dh.cells.Y == 0)
                 rok[1].left.flag = false;
-            if (position.X == 7 && position.Y == 0)
+            if (position.X == 7 && position.Y == 0 || dh.cells.X == 7 && dh.cells.Y == 0)
                 rok[1].right.flag = false;
             if (position.X == 4 && position.Y == 7)
             {
@@ -331,47 +300,48 @@ namespace chess
             //если игрок пытается передвинуть чужую фигуру,выводим напоминание
         }
 
-        private Cells[,] go(int x, int y, Cells[,] poles) //Функция перемещения фигур по полю
+
+        private Cells[,] go(int X, int Y, DostupnyyHod dh, Cells[,] poles, FlangRokirovka[] rok) //Функция перемещения фигур по полю
         {
             //проверяем какой игрок сейчас ходит
             //и фигуру какого цвета он хочет передвинуть
 
-
-
-            poles[x, y].name_figur = new Figura(poles[position.X, position.Y].name_figur); //передвигаем фигур
-            poles[position.X, position.Y].name_figur = null;
-            if (y == 0 || y == 7)
-            {
-                if (Figura.figury[0, 0].Compar(poles[x, y].name_figur))
-                    poles[x, y].name_figur = new Figura(Figura.figury[0, 4]);
-                if (Figura.figury[1, 0].Compar(poles[x, y].name_figur))
-                    poles[x, y].name_figur = new Figura(Figura.figury[1, 4]);
-            }
-            return poles;
-            //drawing();
-
-            //если игрок пытается передвинуть чужую фигуру,выводим напоминание
-        }
-        private Cells[,] go(int X, int Y, int x, int y, Cells[,] poles) //Функция перемещения фигур по полю
-        {
-            //проверяем какой игрок сейчас ходит
-            //и фигуру какого цвета он хочет передвинуть
-
-
-
-            poles[x, y].name_figur = new Figura(poles[X, Y].name_figur); //передвигаем фигур
+            if (poles[dh.cells.X, dh.cells.Y].name_figur != null)
+                if (poles[dh.cells.X, dh.cells.Y].name_figur.name.name == Figura.KOROL_NAME)
+                    MessageBox.Show("Пытаемся есть короля");
+            poles[dh.cells.X, dh.cells.Y].name_figur = new Figura(poles[X, Y].name_figur); //передвигаем фигур
             poles[X, Y].name_figur = null;
-            if (y == 0 || y == 7)
+            if (dh.cells.X == 0 || dh.cells.Y == 7)
             {
-                if (Figura.figury[0, 0].Compar(poles[x, y].name_figur))
-                    poles[x, y].name_figur = new Figura(Figura.figury[0, 4]);
-                if (Figura.figury[1, 0].Compar(poles[x, y].name_figur))
-                    poles[x, y].name_figur = new Figura(Figura.figury[1, 4]);
+                if (Figura.figury[Figura.WHITE, Figura.PESHKA].Compar(poles[dh.cells.X, dh.cells.Y].name_figur))
+                    poles[dh.cells.X, dh.cells.Y].name_figur = new Figura(Figura.figury[Figura.WHITE, Figura.FERZ]);
+                if (Figura.figury[Figura.BLACK, Figura.PESHKA].Compar(poles[dh.cells.X, dh.cells.Y].name_figur))
+                    poles[dh.cells.X, dh.cells.Y].name_figur = new Figura(Figura.figury[Figura.BLACK, Figura.FERZ]);
+            }
+            if (dh.rokirovka)
+            {
+                poles[dh.ladyaEnd.X, dh.ladyaEnd.Y].name_figur = new Figura(poles[dh.ladyaBegin.X, dh.ladyaBegin.Y].name_figur);
+                poles[dh.ladyaBegin.X, dh.ladyaBegin.Y].name_figur = null;
+            }
+            if (X == 0 && Y == 7 || dh.cells.X == 0 && dh.cells.Y == 7)
+                rok[0].left.flag = false;
+            if (X == 7 && Y == 7 || dh.cells.X == 7 && dh.cells.Y == 7)
+                rok[0].right.flag = false;
+            if (X == 0 && Y == 0 || dh.cells.X == 0 && dh.cells.Y == 0)
+                rok[1].left.flag = false;
+            if (X == 7 && Y == 0 || dh.cells.X == 7 && dh.cells.Y == 0)
+                rok[1].right.flag = false;
+            if (X == 4 && Y == 7)
+            {
+                rok[0].left.flag = false;
+                rok[0].right.flag = false;
+            }
+            if (X == 4 && Y == 0)
+            {
+                rok[1].left.flag = false;
+                rok[1].right.flag = false;
             }
             return poles;
-            //drawing();
-
-            //если игрок пытается передвинуть чужую фигуру,выводим напоминание
         }
         private void button1_Click_1(object sender, EventArgs e)//обработчик события при нажатии на кнопку "Начать сначала!"
         {
@@ -408,8 +378,9 @@ namespace chess
         {//Функция проверки корректности ходов всех фигур
             if (x >= 0 && x < 8 && y >= 0 && y < 8)
             {
-                if (allow_pole.Contains(pole[x, y]))
+                if (DostupnyyHod.Contains(allow_pole, pole[x, y]))
                 {
+                    DostupnyyHod dh = DostupnyyHod.getOfCells(allow_pole, pole[x, y]);
                     if (player == "Белый")
                     {
                         W_povtor = new Coordinata(position, new Point(x, y));
@@ -421,19 +392,22 @@ namespace chess
                     string log = string_hod(position, new Point(x, y)) + ";";
                     Ctrl_Z z = new Ctrl_Z(pole[position.X, position.Y], pole[x, y], false, rok, player, W_ochki, B_ochki);
                     otmena.Push(z);
-                    go(x, y);
+                    if (dh.rokirovka)
+                    {
+                        Ctrl_Z zx = new Ctrl_Z(pole[dh.ladyaBegin.X, dh.ladyaBegin.Y], pole[dh.ladyaEnd.X, dh.ladyaEnd.Y], true, rok, player, W_ochki, B_ochki);
+                        otmena.Push(zx);
+                    }
+                    go(dh);
                     Invoke(new Action(() => { listBox1.Items.Insert(0, log); }));
                     dostup_hod();
 
 
-                    if (!check_no_shah(pole))
+                    if (!check_no_shah(pole, player))
                         if (available_course.Count == 0)
                             MessageBox.Show("Мат " + player);
                         else
                         {
                             MessageBox.Show("Шах " + player);
-                            /*tik = 0;
-                            timer1.Start();*/
                             next_hod();
 
                         }
@@ -442,68 +416,10 @@ namespace chess
                         MessageBox.Show("Пат");
                     else
                     {
-                        /*tik = 0;
-                        timer1.Start();*/
                         next_hod();
                     }
                 }
-                else
-                    if (hod_rok.Contains(pole[x, y]))
-                {
-                    string log = "Рокировка " + char_from_number(position.X) + (8 - position.Y) + " - " + char_from_number(x) + (8 - y) + ";";
-                    Ctrl_Z z = new Ctrl_Z(pole[position.X, position.Y], pole[x, y], false, rok, player, W_ochki, B_ochki);
-                    otmena.Push(z);
-                    go(x, y);
-                    int Y = 0;
-                    if (player == "Белый")
-                    {
-                        player = "Черный";
-                        Y = 0;
-                    }
-                    else
-                    {
-                        player = "Белый";
-                        Y = 7;
-                    }
-                    position.Y = Y;
-                    if (x < 4)
-                    {
-                        position.X = 0;
-                        Ctrl_Z zx = new Ctrl_Z(pole[position.X, position.Y], pole[3, Y], true, rok, player, W_ochki, B_ochki);
-                        otmena.Push(zx);
-                        go(3, Y);
-                    }
-                    else
-                    {
-                        position.X = 7;
-                        Ctrl_Z zx = new Ctrl_Z(pole[position.X, position.Y], pole[5, Y], true, rok, player, W_ochki, B_ochki);
-                        otmena.Push(zx);
-                        go(5, Y);
-                    }
 
-                    dostup_hod();
-
-
-                    if (!check_no_shah(pole))
-                        if (available_course.Count == 0)
-                            MessageBox.Show("Мат " + player);
-                        else
-                        {
-                            MessageBox.Show("Шах " + player);
-                            /*tik = 0;
-                            timer1.Start();*/
-                            next_hod();
-                        }
-                    else
-                        if (available_course.Count == 0)
-                        MessageBox.Show("Пат");
-                    else
-                    {
-                        /*tik = 0;
-                        timer1.Start();*/
-                        next_hod();
-                    }
-                }
             }
 
 
@@ -543,7 +459,7 @@ namespace chess
                     select_Figura.Show();
 
                 }
-                else if (current_player()!="Компьютер")
+                else if (current_player() != "Компьютер")
                 {
                     //проверяем не выходит ли если координата за границы
                     if (stat) //если нет, проверяем была ли быврана фигура для хода
@@ -567,53 +483,94 @@ namespace chess
                     }
                 }
         }
-        ArrayList Kon(int x, int y, Cells[,] poles)
+        List<DostupnyyHod> kon_hod(int x, int y, Cells[,] poles)
         {
-            ArrayList kon = new ArrayList();
+            List<DostupnyyHod> kon = new List<DostupnyyHod>();
             if (x - 1 >= 0 && y - 2 >= 0)
-                kon.Add(poles[x - 1, y - 2]);
+                kon.Add(new DostupnyyHod(poles[x - 1, y - 2]));
             if (x + 1 < 8 && y - 2 >= 0)
-                kon.Add(poles[x + 1, y - 2]);
+                kon.Add(new DostupnyyHod(poles[x + 1, y - 2]));
             if (x - 2 >= 0 && y - 1 >= 0)
-                kon.Add(poles[x - 2, y - 1]);
+                kon.Add(new DostupnyyHod(poles[x - 2, y - 1]));
             if (x + 2 < 8 && y - 1 >= 0)
-                kon.Add(poles[x + 2, y - 1]);
+                kon.Add(new DostupnyyHod(poles[x + 2, y - 1]));
             if (x - 2 >= 0 && y + 1 < 8)
-                kon.Add(poles[x - 2, y + 1]);
+                kon.Add(new DostupnyyHod(poles[x - 2, y + 1]));
             if (x + 2 < 8 && y + 1 < 8)
-                kon.Add(poles[x + 2, y + 1]);
+                kon.Add(new DostupnyyHod(poles[x + 2, y + 1]));
             if (x - 1 >= 0 && y + 2 < 8)
-                kon.Add(poles[x - 1, y + 2]);
+                kon.Add(new DostupnyyHod(poles[x - 1, y + 2]));
             if (x + 1 < 8 && y + 2 < 8)
-                kon.Add(poles[x + 1, y + 2]);
+                kon.Add(new DostupnyyHod(poles[x + 1, y + 2]));
             return kon;
         }
-        ArrayList Korol(int x, int y, Cells[,] poles)
+        List<DostupnyyHod> korol_hod(int posX, int posY, Cells[,] poles)
         {
-            ArrayList kon = new ArrayList();
-            if (x - 1 >= 0 && y - 1 >= 0)
-                kon.Add(poles[x - 1, y - 1]);
-            if (y - 1 >= 0)
-                kon.Add(poles[x, y - 1]);
-            if (x + 1 < 8 && y - 1 >= 0)
-                kon.Add(poles[x + 1, y - 1]);
-            if (x + 1 < 8)
-                kon.Add(poles[x + 1, y]);
-            if (x + 1 < 8 && y + 1 < 8)
-                kon.Add(poles[x + 1, y + 1]);
-            if (y + 1 < 8)
-                kon.Add(poles[x, y + 1]);
-            if (x - 1 >= 0 && y + 1 < 8)
-                kon.Add(poles[x - 1, y + 1]);
-            if (x - 1 >= 0)
-                kon.Add(poles[x - 1, y]);
-            return kon;
+            List<DostupnyyHod> allow_pole = new List<DostupnyyHod>();
+            if (posX - 1 >= 0 && posY - 1 >= 0)
+                allow_pole.Add(new DostupnyyHod(poles[posX - 1, posY - 1]));
+            if (posY - 1 >= 0)
+                allow_pole.Add(new DostupnyyHod(poles[posX, posY - 1]));
+            if (posX + 1 < 8 && posY - 1 >= 0)
+                allow_pole.Add(new DostupnyyHod(poles[posX + 1, posY - 1]));
+            if (posX + 1 < 8)
+                allow_pole.Add(new DostupnyyHod(poles[posX + 1, posY]));
+            if (posX + 1 < 8 && posY + 1 < 8)
+                allow_pole.Add(new DostupnyyHod(poles[posX + 1, posY + 1]));
+            if (posY + 1 < 8)
+                allow_pole.Add(new DostupnyyHod(poles[posX, posY + 1]));
+            if (posX - 1 >= 0 && posY + 1 < 8)
+                allow_pole.Add(new DostupnyyHod(poles[posX - 1, posY + 1]));
+            if (posX - 1 >= 0)
+                allow_pole.Add(new DostupnyyHod(poles[posX - 1, posY]));
+            return allow_pole;
         }
-        ArrayList hod_figury(int x, int y, int xx, int yy, Cells[,] poles, ArrayList hod)
+        List<DostupnyyHod> korol_hod(int posX, int posY, Cells[,] poles, string playeer, FlangRokirovka[] rok)
+        {
+            List<DostupnyyHod> allow_pole = korol_hod(posX, posY, poles);
+            if (check_no_shah(poles, playeer))
+            {
+                int ind = 0;
+                int Y = 0;
+                if (playeer == "Белый")
+                {
+                    ind = 0;
+                    Y = 7;
+                }
+                else
+                {
+                    ind = 1;
+                    Y = 0;
+                }
+                {
+                    if (rok[ind].left.flag)
+                    {
+                        List<DostupnyyHod> hod = new List<DostupnyyHod>();
+                        hod = hod_figury(posX, posY, -1, 0, poles, hod);
+                        if (poles[0, Y].name_figur != null)
+                            if (DostupnyyHod.Contains(hod, poles[0, Y]) && poles[0, Y].name_figur.name.name == Figura.LADYA_NAME)
+                                allow_pole.Add(new DostupnyyHod(poles[rok[ind].left.coordinata.X, rok[ind].left.coordinata.Y], poles[0, Y], poles[rok[ind].left.coordinata.X + 1, Y]));
+
+
+                    }
+                    if (rok[ind].right.flag)
+                    {
+                        List<DostupnyyHod> hod = new List<DostupnyyHod>();
+                        hod = hod_figury(posX, posY, 1, 0, poles, hod);
+                        if (poles[7, Y].name_figur != null)
+                            if (DostupnyyHod.Contains(hod, poles[7, Y]) && poles[7, Y].name_figur.name.name == Figura.LADYA_NAME)
+                                allow_pole.Add(new DostupnyyHod(poles[rok[ind].right.coordinata.X, rok[ind].right.coordinata.Y], poles[7, Y], poles[rok[ind].right.coordinata.X - 1, Y]));
+                    }
+                }
+            }
+
+            return allow_pole;
+        }
+        List<DostupnyyHod> hod_figury(int x, int y, int xx, int yy, Cells[,] poles, List<DostupnyyHod> hod)
         {
             if (x + xx < 8 && x + xx >= 0 && y + yy < 8 && y + yy >= 0)
             {
-                hod.Add(poles[x + xx, y + yy]);
+                hod.Add(new DostupnyyHod(poles[x + xx, y + yy]));
                 if (poles[x + xx, y + yy].name_figur == null)
                     return hod_figury(x + xx, y + yy, xx, yy, poles, hod);
                 else return hod;
@@ -621,9 +578,9 @@ namespace chess
             }
             else return hod;
         }
-        ArrayList Slon(int x, int y, Cells[,] poles)
+        List<DostupnyyHod> slon_hod(int x, int y, Cells[,] poles)
         {
-            ArrayList slon = new ArrayList();
+            List<DostupnyyHod> slon = new List<DostupnyyHod>();
             slon = hod_figury(x, y, -1, -1, poles, slon);
             slon = hod_figury(x, y, -1, 1, poles, slon);
             slon = hod_figury(x, y, 1, -1, poles, slon);
@@ -631,41 +588,81 @@ namespace chess
             return slon;
 
         }
-        ArrayList Ferz(int x, int y, Cells[,] poles)
+        List<DostupnyyHod> ferz_hod(int x, int y, Cells[,] poles)
         {
-            ArrayList ladya = new ArrayList();
-            ladya = hod_figury(x, y, 0, -1, poles, ladya);
-            ladya = hod_figury(x, y, 0, 1, poles, ladya);
-            ladya = hod_figury(x, y, -1, 0, poles, ladya);
-            ladya = hod_figury(x, y, 1, 0, poles, ladya);
-            ladya = hod_figury(x, y, -1, -1, poles, ladya);
-            ladya = hod_figury(x, y, -1, 1, poles, ladya);
-            ladya = hod_figury(x, y, 1, -1, poles, ladya);
-            ladya = hod_figury(x, y, 1, 1, poles, ladya);
-            return ladya;
+            List<DostupnyyHod> allow_pole = new List<DostupnyyHod>();
+            allow_pole = hod_figury(x, y, 0, -1, poles, allow_pole);
+            allow_pole = hod_figury(x, y, 0, 1, poles, allow_pole);
+            allow_pole = hod_figury(x, y, -1, 0, poles, allow_pole);
+            allow_pole = hod_figury(x, y, 1, 0, poles, allow_pole);
+            allow_pole = hod_figury(x, y, -1, -1, poles, allow_pole);
+            allow_pole = hod_figury(x, y, -1, 1, poles, allow_pole);
+            allow_pole = hod_figury(x, y, 1, -1, poles, allow_pole);
+            allow_pole = hod_figury(x, y, 1, 1, poles, allow_pole);
+            return allow_pole;
 
         }
-        ArrayList Ladya(int x, int y, Cells[,] poles)
+        List<DostupnyyHod> ladya_hod(int x, int y, Cells[,] poles)
         {
-            ArrayList ladya = new ArrayList();
-            ladya = hod_figury(x, y, 0, -1, poles, ladya);
-            ladya = hod_figury(x, y, 0, 1, poles, ladya);
-            ladya = hod_figury(x, y, -1, 0, poles, ladya);
-            ladya = hod_figury(x, y, 1, 0, poles, ladya);
-            return ladya;
+            List<DostupnyyHod> alow_pole = new List<DostupnyyHod>();
+            alow_pole = hod_figury(x, y, 0, -1, poles, alow_pole);
+            alow_pole = hod_figury(x, y, 0, 1, poles, alow_pole);
+            alow_pole = hod_figury(x, y, -1, 0, poles, alow_pole);
+            alow_pole = hod_figury(x, y, 1, 0, poles, alow_pole);
+            return alow_pole;
 
         }
-        bool check_no_shah(Cells[,] poles)
+        List<DostupnyyHod> peska_hod(int posX, int posY, Cells[,] poles, string playeer)
+        {
+            List<DostupnyyHod> allow_pole = new List<DostupnyyHod>();
+            if (Figura.figury[Figura.BLACK, Figura.PESHKA].Compar(poles[posX, posY].name_figur))
+            {
+                if (poles[posX, posY + 1].name_figur == null)
+                    allow_pole.Add(new DostupnyyHod(poles[posX, posY + 1]));
+                if (posY == 1)
+                    if (poles[posX, posY + 2].name_figur == null && poles[posX, posY + 1].name_figur == null)
+                        allow_pole.Add(new DostupnyyHod(poles[posX, posY + 2]));
+                if (posX - 1 >= 0)
+                    if (poles[posX - 1, posY + 1].name_figur != null)
+                        if (poles[posX - 1, posY + 1].name_figur.BorW != playeer)
+                            allow_pole.Add(new DostupnyyHod(poles[posX - 1, posY + 1]));
+                if (posX + 1 < 8)
+                    if (poles[posX + 1, posY + 1].name_figur != null)
+                        if (poles[posX + 1, posY + 1].name_figur.BorW != playeer)
+                            allow_pole.Add(new DostupnyyHod(poles[posX + 1, posY + 1]));
+
+            }
+            if (Figura.figury[Figura.WHITE, Figura.PESHKA].Compar(poles[posX, posY].name_figur))
+            {
+                if (poles[posX, posY - 1].name_figur == null)
+                    allow_pole.Add(new DostupnyyHod(poles[posX, posY - 1]));
+                if (posY == 6)
+                    if (poles[posX, posY - 2].name_figur == null && poles[posX, posY - 1].name_figur == null)
+                        allow_pole.Add(new DostupnyyHod(poles[posX, posY - 2]));
+                if (posX - 1 >= 0)
+                    if (poles[posX - 1, posY - 1].name_figur != null)
+                        if (poles[posX - 1, posY - 1].name_figur.BorW != playeer)
+                            allow_pole.Add(new DostupnyyHod(poles[posX - 1, posY - 1]));
+                if (posX + 1 < 8)
+                    if (poles[posX + 1, posY - 1].name_figur != null)
+                        if (poles[posX + 1, posY - 1].name_figur.BorW != playeer)
+                            allow_pole.Add(new DostupnyyHod(poles[posX + 1, posY - 1]));
+
+            }
+            return allow_pole;
+
+        }
+        bool check_no_shah(Cells[,] poles, string playeer)
         {
             int ix = -1; int gy = -1;
-            Figura K;
-            if (player == "Белый")
-                K = Figura.figury[0, 5];
-            else K = Figura.figury[1, 5];
+            Figura korol;
+            if (playeer == "Белый")
+                korol = Figura.figury[Figura.WHITE, Figura.KOROL];
+            else korol = Figura.figury[Figura.BLACK, Figura.KOROL];
             for (int i = 0; i < 8; i++)
                 for (int g = 0; g < 8; g++)
                 {
-                    if (K.Compar(poles[i, g].name_figur))
+                    if (korol.Compar(poles[i, g].name_figur))
                     {
                         ix = i;
                         gy = g;
@@ -673,142 +670,19 @@ namespace chess
 
                 }
             if (ix == -1 || gy == -1)
-                MessageBox.Show(@"bool check_no_shah(cells[,] poles)");
-            if (player == "Белый")
             {
-                if (ix - 1 >= 0 && gy - 1 >= 0)
-                    if (Figura.figury[1, 0].Compar(poles[ix - 1, gy - 1].name_figur))
-                        return false;
-                if (ix + 1 < 8 && gy - 1 >= 0)
-                    if (Figura.figury[1, 0].Compar(poles[ix + 1, gy - 1].name_figur))
-                        return false;
+                MessageBox.Show(@" Как-то съели короля)");
+                return false;
             }
-            else
-            {
-                if (ix - 1 >= 0 && gy + 1 < 8)
-                    if (Figura.figury[0, 0].Compar(poles[ix - 1, gy + 1].name_figur))
-                        return false;
-                if (ix + 1 < 8 && gy + 1 < 8d)
-                    if (Figura.figury[0, 0].Compar(poles[ix + 1, gy + 1].name_figur))
-                        return false;
-            }
-            int ind = 0;
-            if (player == "Белый")
-                ind = 1;
-            else ind = 0;
-
-            ArrayList figure = Ladya(ix, gy, poles);
-            //bool rez=true;
-            foreach (Cells p in figure)
-            {
-                if (Figura.figury[ind, 1].Compar(p.name_figur))
-                    return false;
-            }
-            figure = Kon(ix, gy, poles);
-            foreach (Cells p in figure)
-            {
-                if (Figura.figury[ind, 2].Compar(p.name_figur))
-                    return false;
-            }
-            figure = Slon(ix, gy, poles);
-            foreach (Cells p in figure)
-            {
-                if (Figura.figury[ind, 3].Compar(p.name_figur))
-                    return false;
-            }
-            figure = Ferz(ix, gy, poles);
-            foreach (Cells p in figure)
-            {
-                if (Figura.figury[ind, 4].Compar(p.name_figur))
-                    return false;
-            }
-            figure = Korol(ix, gy, poles);
-            foreach (Cells p in figure)
-            {
-                if (Figura.figury[ind, 5].Compar(p.name_figur))
-                    return false;
-            }
-            return true;
+            return check_no_ugroza(poles, ix, gy, playeer);
         }
-        bool check_no_shah(Cells[,] poles, string playeer, int r)
-        {
-            int ix = -1; int gy = -1;
-            Figura K;
-            if (playeer == "Белый")
-                K = Figura.figury[0, 5];
-            else K = Figura.figury[1, 5];
-            for (int i = 0; i < 8; i++)
-                for (int g = 0; g < 8; g++)
-                {
-                    if (K.Compar(poles[i, g].name_figur))
-                    {
-                        ix = i;
-                        gy = g;
-                    }
-
-                }
-            if (ix == -1 || gy == -1)
-                MessageBox.Show(@" bool check_no_shah(cells[,] poles,string playeer)" + r);
-            if (playeer == "Белый")
-            {
-                if (ix - 1 >= 0 && gy - 1 >= 0)
-                    if (Figura.figury[1, 0].Compar(poles[ix - 1, gy - 1].name_figur))
-                        return false;
-                if (ix + 1 < 8 && gy - 1 >= 0)
-                    if (Figura.figury[1, 0].Compar(poles[ix + 1, gy - 1].name_figur))
-                        return false;
-            }
-            else
-            {
-                if (ix - 1 >= 0 && gy + 1 < 8)
-                    if (Figura.figury[0, 0].Compar(poles[ix - 1, gy + 1].name_figur))
-                        return false;
-                if (ix + 1 < 8 && gy + 1 < 8d)
-                    if (Figura.figury[0, 0].Compar(poles[ix + 1, gy + 1].name_figur))
-                        return false;
-            }
-            int ind = 0;
-            if (playeer == "Белый")
-                ind = 1;
-            else ind = 0;
-
-            ArrayList figure = Ladya(ix, gy, poles);
-            //bool rez=true;
-            foreach (Cells p in figure)
-            {
-                if (Figura.figury[ind, 1].Compar(p.name_figur))
-                    return false;
-            }
-            figure = Kon(ix, gy, poles);
-            foreach (Cells p in figure)
-            {
-                if (Figura.figury[ind, 2].Compar(p.name_figur))
-                    return false;
-            }
-            figure = Slon(ix, gy, poles);
-            foreach (Cells p in figure)
-            {
-                if (Figura.figury[ind, 3].Compar(p.name_figur))
-                    return false;
-            }
-            figure = Ferz(ix, gy, poles);
-            foreach (Cells p in figure)
-            {
-                if (Figura.figury[ind, 4].Compar(p.name_figur))
-                    return false;
-            }
-            figure = Korol(ix, gy, poles);
-            foreach (Cells p in figure)
-            {
-                if (Figura.figury[ind, 5].Compar(p.name_figur))
-                    return false;
-            }
-            return true;
-        }
-        bool check_no_shah(Cells[,] poles, int ix, int gy, string playeer)
+        bool check_no_ugroza(Cells[,] poles, int ix, int gy, string playeer)
         {
             if (ix == -1 || gy == -1)
-                MessageBox.Show(@"bool check_no_shah(cells[,] poles,int ix,int gy, string playeer)");
+            {
+                MessageBox.Show(@"Проверка на угрозу не существующей фигуры)");
+                return false;
+            }
             if (playeer == "Белый")
             {
                 if (ix - 1 >= 0 && gy - 1 >= 0)
@@ -832,35 +706,35 @@ namespace chess
                 ind = 1;
             else ind = 0;
 
-            ArrayList figure = Ladya(ix, gy, poles);
+            List<DostupnyyHod> figure = ladya_hod(ix, gy, poles);
             //bool rez=true;
-            foreach (Cells p in figure)
+            foreach (DostupnyyHod p in figure)
             {
-                if (Figura.figury[ind, 1].Compar(p.name_figur))
+                if (Figura.figury[ind, Figura.LADYA].Compar(p.cells.name_figur))
                     return false;
             }
-            figure = Kon(ix, gy, poles);
-            foreach (Cells p in figure)
+            figure = kon_hod(ix, gy, poles);
+            foreach (DostupnyyHod p in figure)
             {
-                if (Figura.figury[ind, 2].Compar(p.name_figur))
+                if (Figura.figury[ind, Figura.KON].Compar(p.cells.name_figur))
                     return false;
             }
-            figure = Slon(ix, gy, poles);
-            foreach (Cells p in figure)
+            figure = slon_hod(ix, gy, poles);
+            foreach (DostupnyyHod p in figure)
             {
-                if (Figura.figury[ind, 3].Compar(p.name_figur))
+                if (Figura.figury[ind, Figura.SLON].Compar(p.cells.name_figur))
                     return false;
             }
-            figure = Ferz(ix, gy, poles);
-            foreach (Cells p in figure)
+            figure = ferz_hod(ix, gy, poles);
+            foreach (DostupnyyHod p in figure)
             {
-                if (Figura.figury[ind, 4].Compar(p.name_figur))
+                if (Figura.figury[ind, Figura.FERZ].Compar(p.cells.name_figur))
                     return false;
             }
-            figure = Korol(ix, gy, poles);
-            foreach (Cells p in figure)
+            figure = korol_hod(ix, gy, poles);
+            foreach (DostupnyyHod p in figure)
             {
-                if (Figura.figury[ind, 5].Compar(p.name_figur))
+                if (Figura.figury[ind, Figura.KOROL].Compar(p.cells.name_figur))
                     return false;
             }
             return true;
@@ -868,7 +742,7 @@ namespace chess
         Point check_coord_shah(Cells[,] poles, int ix, int gy, string playeer)
         {
             if (ix == -1 || gy == -1)
-                MessageBox.Show(@"bool check_no_shah(cells[,] poles,int ix,int gy, string playeer)");
+                MessageBox.Show(@"Несуществующее поле");
             if (playeer == "Белый")
             {
                 if (ix - 1 >= 0 && gy - 1 >= 0)
@@ -892,105 +766,86 @@ namespace chess
                 ind = 1;
             else ind = 0;
 
-            ArrayList figure = Ladya(ix, gy, poles);
+            List<DostupnyyHod> figure = ladya_hod(ix, gy, poles);
             //bool rez=true;
-            foreach (Cells p in figure)
+            foreach (DostupnyyHod p in figure)
             {
-                if (Figura.figury[ind, 1].Compar(p.name_figur))
-                    return new Point(p.X, p.Y);
+                if (Figura.figury[ind, 1].Compar(p.cells.name_figur))
+                    return new Point(p.cells.X, p.cells.Y);
             }
-            figure = Kon(ix, gy, poles);
-            foreach (Cells p in figure)
+            figure = kon_hod(ix, gy, poles);
+            foreach (DostupnyyHod p in figure)
             {
-                if (Figura.figury[ind, 2].Compar(p.name_figur))
-                    return new Point(p.X, p.Y);
+                if (Figura.figury[ind, 2].Compar(p.cells.name_figur))
+                    return new Point(p.cells.X, p.cells.Y);
             }
-            figure = Slon(ix, gy, poles);
-            foreach (Cells p in figure)
+            figure = slon_hod(ix, gy, poles);
+            foreach (DostupnyyHod p in figure)
             {
-                if (Figura.figury[ind, 3].Compar(p.name_figur))
-                    return new Point(p.X, p.Y);
+                if (Figura.figury[ind, 3].Compar(p.cells.name_figur))
+                    return new Point(p.cells.X, p.cells.Y);
             }
-            figure = Ferz(ix, gy, poles);
-            foreach (Cells p in figure)
+            figure = ferz_hod(ix, gy, poles);
+            foreach (DostupnyyHod p in figure)
             {
-                if (Figura.figury[ind, 4].Compar(p.name_figur))
-                    return new Point(p.X, p.Y);
+                if (Figura.figury[ind, 4].Compar(p.cells.name_figur))
+                    return new Point(p.cells.X, p.cells.Y);
             }
-            figure = Korol(ix, gy, poles);
-            foreach (Cells p in figure)
+            figure = korol_hod(ix, gy, poles);
+            foreach (DostupnyyHod p in figure)
             {
-                if (Figura.figury[ind, 5].Compar(p.name_figur))
-                    return new Point(p.X, p.Y);
+                if (Figura.figury[ind, 5].Compar(p.cells.name_figur))
+                    return new Point(p.cells.X, p.cells.Y);
             }
             return new Point(-1, -1);
-        }
-        Cells[,] Copy_mas(Cells[,] mas)
-        {
-            Cells[,] poles = new Cells[8, 8];
-            for (int x = 0; x < 8; x++)
-                for (int y = 0; y < 8; y++)
-                {
-                    poles[x, y] = new Cells(mas[x, y]);
-
-                }
-
-            return poles;
         }
 
         Random rand = new Random();
         void randi()
         {
-            ArrayList Coord = new ArrayList();
+            List<Hod> best_hodss = new List<Hod>();
             int evr = -999999;
             Point Begin = new Point(-1, -1);
             Point End = new Point(-1, -1);
+            Dictionary<Hod, int> map_coefficents = new Dictionary<Hod, int>();
             dostup_hod();
             Invoke(new Action(() => { listBox2.Items.Insert(0, "---Следующий Ход---"); }));
-            foreach (Cells c in available_course)
+            int count_threads = 0;
+            foreach (Cells c in available_course.Keys)
             {
-                ArrayList alow = alow_hod(1, Copy_mas(pole), player, c.X, c.Y);
-                foreach (Cells k in alow)
+                List<DostupnyyHod> alow = available_course[c];
+                foreach (DostupnyyHod k in alow)
                 {
-                    int e;
-                    int depth = 0;
-                    try
-                    {
-                        depth = Convert.ToInt32(textBox1.Text);
-                    } catch (Exception excep)
-                    {
-                        MessageBox.Show(excep.Message);
-                    }
-                    e = calculate(0, c.X, c.Y, k.X, k.Y, Copy_mas(pole), player, depth);
-                    Invoke(new Action(() => { listBox2.Items.Insert(0, string_hod(new Point(c.X, c.Y), new Point(k.X, k.Y)) + " = " + e + ";"); }));
-                    if (e > evr)
-                    {
+                    vychislenie_cofficienta(new Hod(c, k), map_coefficents);
+                    //new Thread(() => vychislenie_cofficienta(new Hod(c, k), map_coefficents)).Start();
+                    count_threads++;
+                }
 
-                        evr = e;
-                        Begin = new Point(c.X, c.Y);
-                        End = new Point(k.X, k.Y);
-                        Coord.Clear();
-                        Coordinata coor = new Coordinata(Begin, End);
-                        Coord.Add(coor);
-                        if (evr == 100000)
-                        {
-                            break;
-                        }
+            }
+            Invoke(new Action(() => { listBox2.Items.Insert(0, count_threads + " доступных ходов"); }));
+            while (count_threads != map_coefficents.Count)
+            {
+                Thread.Sleep(10);
+            }
+            foreach (Hod hodd in map_coefficents.Keys)
+            {
+                int e = map_coefficents[hodd];
+                if (e > evr)
+                {
+
+                    evr = e;
+
+                    best_hodss.Clear();
+                    best_hodss.Add(hodd);
 
 
 
-                    }
-                    else if (e == evr)
-                    {
+                }
+                else if (e == evr)
+                {
 
+                    best_hodss.Add(hodd);
 
-                        Begin = new Point(c.X, c.Y);
-                        End = new Point(k.X, k.Y);
-                        Coordinata coor = new Coordinata(Begin, End);
-                        Coord.Add(coor);
-
-
-                    }
 
                 }
                 if (evr == 100000)
@@ -998,47 +853,67 @@ namespace chess
                     break;
                 }
 
+
+
             }
-            Coordinata coordin = ((Coordinata)Coord[rand.Next(Coord.Count - 1)]);
-            position = coordin.Begin;
+
+
+            Hod hod = best_hodss[rand.Next(best_hodss.Count - 1)];
+            position = new Point(hod.begin.X, hod.begin.Y);
             alow_hod(pole);
-            check_moove(coordin.End.X, coordin.End.Y);
+            check_moove(hod.hod.cells.X, hod.hod.cells.Y);
         }
 
-        int calculate(int count, int X, int Y, int x, int y, Cells[,] poles, string playeer, int depth)
+        void vychislenie_cofficienta(Hod hodd, Dictionary<Hod, int> map_coefficents)
         {
-            int now_evr = evristic(X, Y, x, y, playeer, poles);
+
+            int e;
+            int depth = 0;
+            try
+            {
+                depth = Convert.ToInt32(textBox1.Text);
+            }
+            catch (Exception excep)
+            {
+                MessageBox.Show(excep.Message);
+            }
+            //new Thread(() => randi()).Start();
+            e = calculate(0, hodd.begin.X, hodd.begin.Y, hodd.hod, Cells.copy_cells(pole), copy_rokirovka(rok), player, depth);
+            Invoke(new Action(() => { map_coefficents.Add(hodd, e); }));
+            Invoke(new Action(() => { listBox2.Items.Insert(0, string_hod(new Point(hodd.begin.X, hodd.begin.Y), new Point(hodd.hod.cells.X, hodd.hod.cells.Y)) + " = " + e + ";"); }));
+        }
+
+        int calculate(int count, int X, int Y, DostupnyyHod dh, Cells[,] poles, FlangRokirovka[] rok, string playeer, int depth)
+        {
+            int now_evr = evristic(X, Y, dh, playeer, poles, rok);
             if (depth == count)
             {
                 return now_evr;
             }
             else
             {
-                Cells[,] neo_pole = go(X, Y, x, y, Copy_mas(poles));
-                if (check_mat(neo_pole, anti_player(playeer)))
+                FlangRokirovka[] neo_rok = copy_rokirovka(rok);
+                Cells[,] neo_pole = go(X, Y, dh, Cells.copy_cells(poles), neo_rok);
+                Dictionary<Cells, List<DostupnyyHod>> av_cc = dostup_hod(neo_pole, anti_player(playeer), neo_rok);
+                if (check_mat(av_cc, neo_pole, anti_player(playeer)))
                     return 100000 - count;
-                if (check_pat(neo_pole, anti_player(playeer)))
+                if (check_pat(av_cc, neo_pole, anti_player(playeer)))
                     return -100000;
-                ArrayList av_cc = dostup_hod(0, neo_pole, anti_player(playeer));
                 int evr = -999999;
-                Point begin;
-                Point end;
-                ArrayList max_coords_antiplayer = new ArrayList();
-                foreach (Cells cc in av_cc)
+                List<Hod> max_coords_antiplayer = new List<Hod>();
+                foreach (Cells cc in av_cc.Keys)
                 {
-                    ArrayList aloww = alow_hod(2, Copy_mas(neo_pole), anti_player(playeer), cc.X, cc.Y);
-                    foreach (Cells kk in aloww)
+                    List<DostupnyyHod> aloww = av_cc[cc];
+                    foreach (DostupnyyHod kk in aloww)
                     {
-                        int e = evristic(cc.X, cc.Y, kk.X, kk.Y, anti_player(playeer), neo_pole);
+                        int e = evristic(cc.X, cc.Y, kk, anti_player(playeer), neo_pole, neo_rok);
                         if (e > evr)
                         {
 
                             evr = e;
-                            begin = new Point(cc.X, cc.Y);
-                            end = new Point(kk.X, kk.Y);
                             max_coords_antiplayer.Clear();
-                            Coordinata coor = new Coordinata(begin, end);
-                            max_coords_antiplayer.Add(coor);
+                            Hod hodd = new Hod(cc, kk);
+                            max_coords_antiplayer.Add(hodd);
 
 
 
@@ -1047,55 +922,35 @@ namespace chess
                         {
 
 
-                            begin = new Point(cc.X, cc.Y);
-                            end = new Point(kk.X, kk.Y);
-                            Coordinata coor = new Coordinata(begin, end);
-                            max_coords_antiplayer.Add(coor);
+                            Hod hodd = new Hod(cc, kk);
+                            max_coords_antiplayer.Add(hodd);
 
 
                         }
 
-                        /*if (check_mat(go(cc.X, cc.Y, kk.X, kk.Y, Copy_mas(neo_pole)), playeer))
-                            return -100000;
-                        if (check_pat(go(cc.X, cc.Y, kk.X, kk.Y, Copy_mas(neo_pole)), anti_player(playeer)))
-                            if (can_pat(playeer))
-                                return 100000;
-                            else
-                                return -100000;*/
-
                     }
                 }
-                Coordinata coordin = ((Coordinata)max_coords_antiplayer[rand.Next(max_coords_antiplayer.Count - 1)]);
-                neo_pole = go(coordin.Begin.X, coordin.Begin.Y, coordin.End.X, coordin.End.Y, Copy_mas(neo_pole));
-                if (check_mat(neo_pole, playeer))
+                Hod hod = max_coords_antiplayer[rand.Next(max_coords_antiplayer.Count - 1)];
+                neo_rok = copy_rokirovka(neo_rok);
+                neo_pole = go(hod.begin.X, hod.begin.Y, hod.hod, Cells.copy_cells(neo_pole), neo_rok);
+                av_cc = dostup_hod(neo_pole, playeer, neo_rok);
+                if (check_mat(av_cc, neo_pole, playeer))
                     return -100000;
-                av_cc = dostup_hod(0, neo_pole, playeer);
+                av_cc = dostup_hod(neo_pole, playeer, neo_rok);
                 evr = -999999;
-                foreach (Cells cc in av_cc)
+                foreach (Cells cc in av_cc.Keys)
                 {
-                    ArrayList aloww = alow_hod(2, Copy_mas(neo_pole), playeer, cc.X, cc.Y);
-                    foreach (Cells kk in aloww)
+                    List<DostupnyyHod> aloww = av_cc[cc];
+                    foreach (DostupnyyHod kk in aloww)
                     {
-                        int e = calculate(count + 1, cc.X, cc.Y, kk.X, kk.Y, Copy_mas(neo_pole), playeer, depth);
+                        int e = calculate(count + 1, cc.X, cc.Y, kk, Cells.copy_cells(neo_pole), copy_rokirovka(neo_rok), playeer, depth);
                         if (e == 100000 - count - 1)
                             return e;
                         if (e > evr)
                             evr = e;
 
-                        /*if (check_mat(go(cc.X, cc.Y, kk.X, kk.Y, Copy_mas(neo_pole)), playeer))
-                            return -100000;
-                        if (check_pat(go(cc.X, cc.Y, kk.X, kk.Y, Copy_mas(neo_pole)), anti_player(playeer)))
-                            if (can_pat(playeer))
-                                return 100000;
-                            else
-                                return -100000;*/
-
                     }
                 }
-                /*int e = calculate(count + 1, cc.X, cc.Y, kk.X, kk.Y, Copy_mas(neo_pole), playeer, depth);
-                if (e > evr)
-                    evr = e;
-                ;*/
                 return now_evr + evr;
             }
         }
@@ -1107,19 +962,17 @@ namespace chess
             else aplayer = "Белый";
             return aplayer;
         }
-        bool check_mat(Cells[,] poles, string playeer)
+        bool check_mat(Dictionary<Cells, List<DostupnyyHod>> dost_hod, Cells[,] poles, string playeer)
         {
-            ArrayList dost_hod = dostup_hod(1, poles, playeer);
             if (dost_hod.Count == 0)
-                if (!check_no_shah(poles, playeer, 0))
+                if (!check_no_shah(poles, playeer))
                     return true;
             return false;
         }
-        bool check_pat(Cells[,] poles, string playeer)
+        bool check_pat(Dictionary<Cells, List<DostupnyyHod>> dost_hod, Cells[,] poles, string playeer)
         {
-            ArrayList dost_hod = dostup_hod(2, poles, playeer);
             if (dost_hod.Count == 0)
-                if (check_no_shah(poles, playeer, 0))
+                if (check_no_shah(poles, playeer))
                     return true;
             return false;
         }
@@ -1136,17 +989,17 @@ namespace chess
 
         }
 
-        int evristic(int X, int Y, int x, int y, string playeer, Cells[,] pole)
+        int evristic(int X, int Y, DostupnyyHod dh, string playeer, Cells[,] pole, FlangRokirovka[] rok)
         {
             int evr = 0;
             string aplayer = anti_player(playeer);
-
-            Cells[,] poles = Copy_mas(pole);//если что изменить
+            Cells[,] poles = Cells.copy_cells(pole);//если что изменить
+            FlangRokirovka[] roks = copy_rokirovka(rok);
             int eda = 0;
             int you_mat = 0;
-            if (poles[x, y].name_figur != null)
-                eda = poles[x, y].name_figur.name.ochki;
-            poles = go(X, Y, x, y, poles);
+            if (poles[dh.cells.X, dh.cells.Y].name_figur != null)
+                eda = poles[dh.cells.X, dh.cells.Y].name_figur.name.ochki;
+            poles = go(X, Y, dh, poles, roks);
             int k_mat = 10000;
             int k_pat = 0;
             double w_k = ((double)W_ochki) * 0.75;
@@ -1163,22 +1016,23 @@ namespace chess
             int mat = 0;
             int shah = 0;
             int povt = 0;
-            ArrayList dost_hod = dostup_hod(3, poles, aplayer);
-            if (dost_hod.Count == 0)
-                if (check_no_shah(poles, aplayer, 0))
+            Dictionary<Cells, List<DostupnyyHod>> dost_hod_aplayer = dostup_hod(poles, aplayer, roks);
+            Dictionary<Cells, List<DostupnyyHod>> dost_hod_player = dostup_hod(poles, player, roks);
+            if (dost_hod_aplayer.Count == 0)
+                if (check_no_shah(poles, aplayer))
                     pat = 1;
                 else
                     mat = 1;
-            else if (!check_no_shah(poles, aplayer, 1))
+            else if (!check_no_shah(poles, aplayer))
                 shah = 1;
             if (playeer == "Белый")
             {
-                if (W_povtor.Compar(X, Y, x, y))
+                if (W_povtor.Compar(X, Y, dh.cells.X, dh.cells.Y))
                     povt = -100;
             }
             else
             {
-                if (B_povtor.Compar(X, Y, x, y))
+                if (B_povtor.Compar(X, Y, dh.cells.X, dh.cells.Y))
                     povt = -100;
             }
             int my_udar = 0;
@@ -1197,50 +1051,53 @@ namespace chess
                         {
                             if (poles[i, g].name_figur.BorW == playeer)
                             {
-                                if (!check_no_shah(poles, i, g, playeer))
+                                if (!check_no_ugroza(poles, i, g, playeer))
                                     my_udar += poles[i, g].name_figur.name.ochki;
-                                ArrayList a = alow_hod(4, poles, playeer, i, g);
-                                if (Figura.figury[0, 5].name.Compar(poles[i, g].name_figur.name))
-                                    my_cells_korol = a.Count;
-                                if (a.Count == 0)
+                                if (dost_hod_player.ContainsKey(poles[i, g]))
+                                {
+                                    List<DostupnyyHod> a = dost_hod_player[poles[i, g]];
+                                    if (poles[i, g].name_figur.name.name == Figura.KOROL_NAME)
+                                        my_cells_korol = a.Count;
+                                }
+                                else
                                     my_svyas++;
 
                             }
                             else
                             {
-                                if (!check_no_shah(poles, i, g, aplayer))
+                                if (!check_no_ugroza(poles, i, g, aplayer))
                                 {
                                     Point pnt = check_coord_shah(poles, i, g, aplayer);
-                                    if (check_no_shah(poles, pnt.X, pnt.Y, player))
+                                    if (check_no_ugroza(poles, pnt.X, pnt.Y, player))
                                         you_udar += poles[i, g].name_figur.name.ochki;
                                 }
-                                ArrayList al_hod = alow_hod(5, poles, aplayer, i, g);
-                                if (Figura.figury[0, 5].name.Compar(poles[i, g].name_figur.name))
-                                    you_cells_korol = al_hod.Count;
-                                if (al_hod.Count == 0)
-                                    you_svyas++;
-                                else
+                                if (dost_hod_aplayer.ContainsKey(poles[i, g]))
                                 {
-                                    foreach (Cells p in al_hod)
+                                    List<DostupnyyHod> al_hod = dost_hod_aplayer[poles[i, g]];
+                                    if (Figura.figury[0, 5].name.Compar(poles[i, g].name_figur.name))
+                                        you_cells_korol = al_hod.Count;
+                                    foreach (DostupnyyHod p in al_hod)
                                     {
-                                        Cells[,] neo_pole = go(i, g, p.X, p.Y, Copy_mas(poles));
-                                        //if (neo_pole[4, 0].name_figur == null)
-                                        // MessageBox.Show("OOO");
-                                        ArrayList dost_hod_neo = dostup_hod(4, neo_pole, playeer);
+                                        FlangRokirovka[] neo_rok = copy_rokirovka(roks);
+                                        Cells[,] neo_pole = go(i, g, p, Cells.copy_cells(poles), neo_rok);
+                                        Dictionary<Cells, List<DostupnyyHod>> dost_hod_neo = dostup_hod(neo_pole, playeer, neo_rok);
                                         if (dost_hod_neo.Count == 0)
-                                            if (!check_no_shah(neo_pole, playeer, 2))
+                                            if (!check_no_shah(neo_pole, playeer))
                                                 you_mat = 1;
 
 
                                     }
                                 }
+                                else
+                                    you_svyas++;
+
                             }
                         }
                         else
                         {
-                            if (!check_no_shah(poles, i, g, player))
+                            if (!check_no_ugroza(poles, i, g, player))
                                 you_cells++;
-                            if (!check_no_shah(poles, i, g, aplayer))
+                            if (!check_no_ugroza(poles, i, g, aplayer))
                                 my_cells++;
 
                         }
@@ -1251,47 +1108,24 @@ namespace chess
                 + 8 * you_udar + 4 * you_svyas + 20 * eda + my_cells - you_cells + 8 * my_cells_korol - 8 * you_cells_korol;
             return evr;
         }
-        ArrayList Add_alow(ArrayList figure)
-        {
-            Opisanie_figura f = Figura.figury[0, 4].name;
-            ArrayList allow_pole = new ArrayList();
-            foreach (Cells p in figure)
-            {
-                if (p.name_figur == null)
-                {
-                    if (check_no_shah(go(p.X, p.Y, Copy_mas(pole))))
-                    {
-                        allow_pole.Add(p);
-                    }
-                }
-                else
-                {
-                    if (p.name_figur.BorW != player)
-                        if (check_no_shah(go(p.X, p.Y, Copy_mas(pole))))
-                        {
-                            allow_pole.Add(p);
-                        }
-                }
-            }
-            return allow_pole;
-        }
-        ArrayList Add_alow(ArrayList figure, string playeer, int PX, int PY, Cells[,] pole)
+
+        List<DostupnyyHod> add_alow(List<DostupnyyHod> figure, string playeer, int PX, int PY, Cells[,] poles, FlangRokirovka[] rok)
         {
 
-            ArrayList allow_pole = new ArrayList();
-            foreach (Cells p in figure)
+            List<DostupnyyHod> allow_pole = new List<DostupnyyHod>();
+            foreach (DostupnyyHod p in figure)
             {
-                if (p.name_figur == null)
+                if (p.cells.name_figur == null)
                 {
-                    if (check_no_shah(go(PX, PY, p.X, p.Y, Copy_mas(pole)), playeer, 3))
+                    if (check_no_shah(go(PX, PY, p, Cells.copy_cells(poles), copy_rokirovka(rok)), playeer))
                     {
                         allow_pole.Add(p);
                     }
                 }
                 else
                 {
-                    if (p.name_figur.BorW != playeer)
-                        if (check_no_shah(go(PX, PY, p.X, p.Y, Copy_mas(pole)), playeer, 4))
+                    if (p.cells.name_figur.BorW != playeer && p.cells.name_figur.name.name != Figura.KOROL_NAME)
+                        if (check_no_shah(go(PX, PY, p, Cells.copy_cells(poles), copy_rokirovka(rok)), playeer))
                         {
                             allow_pole.Add(p);
                         }
@@ -1302,239 +1136,44 @@ namespace chess
 
         void alow_hod(Cells[,] pole)
         {
-            allow_pole.Clear();
-            hod_rok.Clear();
-            Opisanie_figura f = new Opisanie_figura("Ферзь", 10);
-
-
-            if (Figura.figury[1, 0].Compar(pole[position.X, position.Y].name_figur))
-            {
-                if (pole[position.X, position.Y + 1].name_figur == null && check_no_shah(go(position.X, position.Y + 1, Copy_mas(pole))))
-                    allow_pole.Add(pole[position.X, position.Y + 1]);
-                if (position.Y == 1)
-                    if (pole[position.X, position.Y + 2].name_figur == null && pole[position.X, position.Y + 1].name_figur == null && check_no_shah(go(position.X, position.Y + 2, Copy_mas(pole))))
-                        allow_pole.Add(pole[position.X, position.Y + 2]);
-                if (position.X - 1 >= 0)
-                    if (pole[position.X - 1, position.Y + 1].name_figur != null)
-                        if (pole[position.X - 1, position.Y + 1].name_figur.BorW != player)
-                            if (check_no_shah(go(position.X - 1, position.Y + 1, Copy_mas(pole))))
-                                allow_pole.Add(pole[position.X - 1, position.Y + 1]);
-                if (position.X + 1 < 8)
-                    if (pole[position.X + 1, position.Y + 1].name_figur != null)
-                        if (pole[position.X + 1, position.Y + 1].name_figur.BorW != player)
-                            if (check_no_shah(go(position.X + 1, position.Y + 1, Copy_mas(pole))))
-                                allow_pole.Add(pole[position.X + 1, position.Y + 1]);
-
-            }
-            if (Figura.figury[0, 0].Compar(pole[position.X, position.Y].name_figur))
-            {
-                if (pole[position.X, position.Y - 1].name_figur == null && check_no_shah(go(position.X, position.Y - 1, Copy_mas(pole))))
-                    allow_pole.Add(pole[position.X, position.Y - 1]);
-                if (position.Y == 6)
-                    if (pole[position.X, position.Y - 2].name_figur == null && pole[position.X, position.Y - 1].name_figur == null && check_no_shah(go(position.X, position.Y - 2, Copy_mas(pole))))
-                        allow_pole.Add(pole[position.X, position.Y - 2]);
-                if (position.X - 1 >= 0)
-                    if (pole[position.X - 1, position.Y - 1].name_figur != null)
-                        if (pole[position.X - 1, position.Y - 1].name_figur.BorW != player)
-                            if (check_no_shah(go(position.X - 1, position.Y - 1, Copy_mas(pole))))
-                                allow_pole.Add(pole[position.X - 1, position.Y - 1]);
-                if (position.X + 1 < 8)
-                    if (pole[position.X + 1, position.Y - 1].name_figur != null)
-                        if (pole[position.X + 1, position.Y - 1].name_figur.BorW != player)
-                            if (check_no_shah(go(position.X + 1, position.Y - 1, Copy_mas(pole))))
-                                allow_pole.Add(pole[position.X + 1, position.Y - 1]);
-
-            }
-
-            ArrayList figure;
-            if (Figura.figury[0, 1].name.Compar(pole[position.X, position.Y].name_figur.name))
-            {
-                figure = Ladya(position.X, position.Y, pole);
-                allow_pole = Add_alow(figure);
-
-            }
-            if (Figura.figury[0, 2].name.Compar(pole[position.X, position.Y].name_figur.name))
-            {
-                figure = Kon(position.X, position.Y, pole);
-                allow_pole = Add_alow(figure);
-
-            }
-            if (Figura.figury[0, 3].name.Compar(pole[position.X, position.Y].name_figur.name))
-            {
-                figure = Slon(position.X, position.Y, pole);
-                allow_pole = Add_alow(figure);
-
-            }
-            if (Figura.figury[0, 4].name.Compar(pole[position.X, position.Y].name_figur.name))
-            {
-                figure = Ferz(position.X, position.Y, pole);
-                allow_pole = Add_alow(figure);
-
-            }
-            if (Figura.figury[0, 5].name.Compar(pole[position.X, position.Y].name_figur.name))
-            {
-                figure = Korol(position.X, position.Y, pole);
-                allow_pole = Add_alow(figure);
-
-                if (check_no_shah(pole))
-                {
-                    int ind = 0;
-                    int Y = 0;
-                    if (player == "Белый")
-                    {
-                        ind = 0;
-                        Y = 7;
-                    }
-                    else
-                    {
-                        ind = 1;
-                        Y = 0;
-                    }
-                    {
-                        if (rok[ind].left.flag)
-                        {
-                            ArrayList hod = new ArrayList();
-                            hod = hod_figury(position.X, position.Y, -1, 0, pole, hod);
-                            if (hod.Contains(pole[0, Y]) && pole[0, Y].name_figur.name.name == "Ладья")
-                                if (check_no_shah(go(2, Y, Copy_mas(pole))))
-
-                                    hod_rok.Add(pole[rok[ind].left.Coord.X, rok[ind].left.Coord.Y]);
-
-
-                        }
-                        if (rok[ind].right.flag)
-                        {
-                            ArrayList hod = new ArrayList();
-                            hod = hod_figury(position.X, position.Y, 1, 0, pole, hod);
-                            if (hod.Contains(pole[7, Y]) && pole[7, Y].name_figur.name.name == "Ладья")
-                                if (check_no_shah(go(6, Y, Copy_mas(pole))))
-                                    hod_rok.Add(pole[rok[ind].right.Coord.X, rok[ind].right.Coord.Y]);
-
-                        }
-                    }
-                }
-
-            }
-
+            allow_pole = alow_hod(pole, player, position.X, position.Y, rok);
         }
-        ArrayList alow_hod(int r, Cells[,] pole, string playeer, int posX, int posY)
+
+
+        List<DostupnyyHod> alow_hod(Cells[,] poles, string playeer, int posX, int posY, FlangRokirovka[] rok)
         {
-            ArrayList allow_pole = new ArrayList();
+            List<DostupnyyHod> allow_pole = new List<DostupnyyHod>();
             ArrayList hod_rok = new ArrayList();
-            //figura_otd f = new figura_otd("Ферзь", 10);
-
-
-            if (Figura.figury[1, 0].Compar(pole[posX, posY].name_figur))
+            if (poles[posX, posY].name_figur != null)
             {
-                if (pole[posX, posY + 1].name_figur == null && check_no_shah(go(posX, posY, posX, posY + 1, Copy_mas(pole)), playeer, r))
-                    allow_pole.Add(pole[posX, posY + 1]);
-                if (posY == 1)
-                    if (pole[posX, posY + 2].name_figur == null && pole[posX, posY + 1].name_figur == null && check_no_shah(go(posX, posY, posX, posY + 2, Copy_mas(pole)), playeer, 6))
-                        allow_pole.Add(pole[posX, posY + 2]);
-                if (posX - 1 >= 0)
-                    if (pole[posX - 1, posY + 1].name_figur != null)
-                        if (pole[posX - 1, posY + 1].name_figur.BorW != playeer)
-                            if (check_no_shah(go(posX, posY, posX - 1, posY + 1, Copy_mas(pole)), playeer, 7))
-                                allow_pole.Add(pole[posX - 1, posY + 1]);
-                if (posX + 1 < 8)
-                    if (pole[posX + 1, posY + 1].name_figur != null)
-                        if (pole[posX + 1, posY + 1].name_figur.BorW != playeer)
-                            if (check_no_shah(go(posX, posY, posX + 1, posY + 1, Copy_mas(pole)), playeer, 8))
-                                allow_pole.Add(pole[posX + 1, posY + 1]);
-
-            }
-            if (Figura.figury[0, 0].Compar(pole[posX, posY].name_figur))
-            {
-                if (pole[posX, posY - 1].name_figur == null && check_no_shah(go(posX, posY, posX, posY - 1, Copy_mas(pole)), playeer, 9))
-                    allow_pole.Add(pole[posX, posY - 1]);
-                if (posY == 6)
-                    if (pole[posX, posY - 2].name_figur == null && pole[posX, posY - 1].name_figur == null && check_no_shah(go(posX, posY, posX, posY - 2, Copy_mas(pole)), playeer, 10))
-                        allow_pole.Add(pole[posX, posY - 2]);
-                if (posX - 1 >= 0)
-                    if (pole[posX - 1, posY - 1].name_figur != null)
-                        if (pole[posX - 1, posY - 1].name_figur.BorW != playeer)
-                            if (check_no_shah(go(posX, posY, posX - 1, posY - 1, Copy_mas(pole)), playeer, 11))
-                                allow_pole.Add(pole[posX - 1, posY - 1]);
-                if (posX + 1 < 8)
-                    if (pole[posX + 1, posY - 1].name_figur != null)
-                        if (pole[posX + 1, posY - 1].name_figur.BorW != playeer)
-                            if (check_no_shah(go(posX, posY, posX + 1, posY - 1, Copy_mas(pole)), playeer, 12))
-                                allow_pole.Add(pole[posX + 1, posY - 1]);
-
-            }
-
-            if (Figura.figury[0, 1].name.Compar(pole[posX, posY].name_figur.name))
-            {
-                ArrayList figure = Ladya(posX, posY, pole);
-                allow_pole = Add_alow(figure, playeer, posX, posY, pole);
-            }
-            if (Figura.figury[0, 2].name.Compar(pole[posX, posY].name_figur.name))
-            {
-                ArrayList figure = Kon(posX, posY, pole);
-                allow_pole = Add_alow(figure, playeer, posX, posY, pole);
-            }
-            if (Figura.figury[0, 3].name.Compar(pole[posX, posY].name_figur.name))
-            {
-                ArrayList figure = Slon(posX, posY, pole);
-                allow_pole = Add_alow(figure, playeer, posX, posY, pole);
-            }
-            if (Figura.figury[0, 4].name.Compar(pole[posX, posY].name_figur.name))
-            {
-                ArrayList figure = Ferz(posX, posY, pole);
-                allow_pole = Add_alow(figure, playeer, posX, posY, pole);
-            }
-            if (Figura.figury[0, 5].name.Compar(pole[posX, posY].name_figur.name))
-            {
-                ArrayList figure = Korol(posX, posY, pole);
-                allow_pole = Add_alow(figure, playeer, posX, posY, pole);
-                if (check_no_shah(pole, playeer, 13) && r == 0)
+                switch (poles[posX, posY].name_figur.name.name)
                 {
-                    int ind = 0;
-                    int Y = 0;
-                    if (playeer == "Белый")
-                    {
-                        ind = 0;
-                        Y = 7;
-                    }
-                    else
-                    {
-                        ind = 1;
-                        Y = 0;
-                    }
-                    {
-                        if (rok[ind].left.flag)
-                        {
-                            ArrayList hod = new ArrayList();
-                            hod = hod_figury(posX, posY, -1, 0, pole, hod);
-                            if (pole[0, Y].name_figur != null)
-                                if (hod.Contains(pole[0, Y]) && pole[0, Y].name_figur.name.name == "Ладья")
-                                    if (check_no_shah(go(posX, posY, 2, Y, Copy_mas(pole)), playeer, r))
-                                        hod_rok.Add(pole[rok[ind].left.Coord.X, rok[ind].left.Coord.Y]);
-
-
-                        }
-                        if (rok[ind].right.flag)
-                        {
-                            ArrayList hod = new ArrayList();
-                            hod = hod_figury(posX, posY, 1, 0, pole, hod);
-                            if (pole[7, Y].name_figur != null)
-                                if (hod.Contains(pole[7, Y]) && pole[7, Y].name_figur.name.name == "Ладья")
-                                    if (check_no_shah(go(posX, posY, 6, Y, Copy_mas(pole)), playeer, r))
-                                        hod_rok.Add(pole[rok[ind].right.Coord.X, rok[ind].right.Coord.Y]);
-
-                        }
-                    }
+                    case Figura.PESHKA_NAME:
+                        allow_pole = peska_hod(posX, posY, poles, playeer);
+                        break;
+                    case Figura.LADYA_NAME:
+                        allow_pole = ladya_hod(posX, posY, poles);
+                        break;
+                    case Figura.KON_NAME:
+                        allow_pole = kon_hod(posX, posY, poles);
+                        break;
+                    case Figura.SLON_NAME:
+                        allow_pole = slon_hod(posX, posY, poles);
+                        break;
+                    case Figura.FERZ_NAME:
+                        allow_pole = ferz_hod(posX, posY, poles);
+                        break;
+                    case Figura.KOROL_NAME:
+                        allow_pole = korol_hod(posX, posY, poles, playeer, rok);
+                        break;
+                    default: break;
                 }
-
             }
-            foreach (Cells c in hod_rok)
-            {
-                allow_pole.Add(c);
-            }
+            allow_pole = add_alow(allow_pole, playeer, posX, posY, poles, rok);
             return allow_pole;
 
         }
-        ArrayList hod_rok = new ArrayList();
+
         private void Form1_Resize(object sender, EventArgs e)
         {
             drawing();//обработчик события изменения размеров главной формы
@@ -1573,13 +1212,13 @@ namespace chess
         {
             Invoke(new Action(() =>
             {
-                if (current_player()== "Компьютер")
+                if (current_player() == "Компьютер")
                 {
-                   new Thread(() => randi()).Start();
-                }                
+                    new Thread(() => randi()).Start();
+                }
             }));
         }
-        
+
         string current_player()
         {
             if (player == "Черный")
@@ -1657,6 +1296,14 @@ namespace chess
                 listBox1.Items.RemoveAt(0);
                 drawing();
             }
+        }
+
+        private FlangRokirovka[] copy_rokirovka(FlangRokirovka[] rok)
+        {
+            FlangRokirovka[] copy_rok = new FlangRokirovka[2];
+            copy_rok[0] = rok[0];
+            copy_rok[1] = rok[1];
+            return copy_rok;
         }
 
     }

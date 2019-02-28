@@ -7,6 +7,23 @@ namespace chess
 {
     public class Figura
     {
+        public const int WHITE = 0;
+        public const int BLACK = 1;
+        public const int PESHKA = 0;
+        public const int LADYA = 1;
+        public const int KON = 2;
+        public const int SLON = 3;
+        public const int FERZ = 4;
+        public const int KOROL = 5;
+        public const string PESHKA_NAME = "Пешка";
+        public const string LADYA_NAME = "Ладья";
+        public const string KON_NAME = "Конь";
+        public const string SLON_NAME = "Слон";
+        public const string FERZ_NAME = "Ферзь";
+        public const string KOROL_NAME = "Король";
+        public static string[] COLOR = { "Белый", "Черный" };
+        public static string[] NAME_FIGURY = { PESHKA_NAME, LADYA_NAME, KON_NAME, SLON_NAME, FERZ_NAME, KOROL_NAME };
+        public static int[] OCHKI_FIGURY = { 1, 5, 3, 3, 10, 0};
         public string BorW;
         public Opisanie_figura name;
         public static Figura[,] figury;
@@ -33,86 +50,12 @@ namespace chess
         }
         public static void init_figurs()
         {
-            figury = new Figura[2, 6];
-            for (int i = 0; i < 2; i++)
-                for (int g = 0; g < 6; g++)
+            figury = new Figura[COLOR.Length, NAME_FIGURY.Length];
+            for (int i = 0; i < COLOR.Length; i++)
+                for (int g = 0; g < NAME_FIGURY.Length; g++)
                 {
-                    Opisanie_figura fig;
-                    switch (g)
-                    {
-                        case 0:
-                            fig = new Opisanie_figura("Пешка", 1);
-                            switch (i)
-                            {
-                                case 0:
-                                    figury[i, g] = new Figura("Белый", fig);
-                                    break;
-                                case 1:
-                                    figury[i, g] = new Figura("Черный", fig);
-                                    break;
-                            }
-                            break;
-                        case 1:
-                            fig = new Opisanie_figura("Ладья", 5);
-                            switch (i)
-                            {
-                                case 0:
-                                    figury[i, g] = new Figura("Белый", fig);
-                                    break;
-                                case 1:
-                                    figury[i, g] = new Figura("Черный", fig);
-                                    break;
-                            }
-                            break;
-                        case 2:
-                            fig = new Opisanie_figura("Конь", 3);
-                            switch (i)
-                            {
-                                case 0:
-                                    figury[i, g] = new Figura("Белый", fig);
-                                    break;
-                                case 1:
-                                    figury[i, g] = new Figura("Черный", fig);
-                                    break;
-                            }
-                            break;
-                        case 3:
-                            fig = new Opisanie_figura("Слон", 3);
-                            switch (i)
-                            {
-                                case 0:
-                                    figury[i, g] = new Figura("Белый", fig);
-                                    break;
-                                case 1:
-                                    figury[i, g] = new Figura("Черный", fig);
-                                    break;
-                            }
-                            break;
-                        case 4:
-                            fig = new Opisanie_figura("Ферзь", 10);
-                            switch (i)
-                            {
-                                case 0:
-                                    figury[i, g] = new Figura("Белый", fig);
-                                    break;
-                                case 1:
-                                    figury[i, g] = new Figura("Черный", fig);
-                                    break;
-                            }
-                            break;
-                        case 5:
-                            fig = new Opisanie_figura("Король", 0);
-                            switch (i)
-                            {
-                                case 0:
-                                    figury[i, g] = new Figura("Белый", fig);
-                                    break;
-                                case 1:
-                                    figury[i, g] = new Figura("Черный", fig);
-                                    break;
-                            }
-                            break;
-                    }
+                    Opisanie_figura fig = new Opisanie_figura(NAME_FIGURY[g], OCHKI_FIGURY[g]);
+                    figury[i, g] = new Figura(COLOR[i], fig);
                 }
         }
     }
